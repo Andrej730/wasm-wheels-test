@@ -1,0 +1,43 @@
+---
+name: Generate Index
+
+"on":
+  push:
+    branches:
+      - master
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Debug - List files
+        run: ls -lah
+
+      - name: Generate index.html
+        run: |
+          mkdir output
+          python generate_index.py > output/index.html 2>&1
+          cp *.whl output/ 2>/dev/null || echo "No wheels to copy"
+          ls -lah output/
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: output
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
